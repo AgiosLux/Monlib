@@ -1,0 +1,17 @@
+{
+    "name": "agioslux/monlib",
+    "description": "Monlib project",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Monlib\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "kremilly",
+            "email": "kremilly@proton.me"
+        }
+    ],
+    "require": {}
+}
