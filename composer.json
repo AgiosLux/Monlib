@@ -13,5 +13,7 @@
             "email": "kremilly@proton.me"
         }
     ],
-    "require": {}
+    "require": {
+        "vlucas/phpdotenv": "^5.5"
+    }
 }

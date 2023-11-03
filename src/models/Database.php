@@ -1,39 +1,47 @@
 <?php
 
-namespace Monlib\models;
+namespace Monlib\Models;
 
 use PDO;
 use PDOException;
+use Dotenv\Dotenv;
 
 class Database {
-    private $host;
-    private $dbname;
-    private $username;
-    private $password;
-    private $charset;
-    private $pdo;
 
-    public function __construct($host, $dbname, $username, $password, $charset = 'utf8') {
-        $this->host = $host;
-        $this->dbname = $dbname;
-        $this->username = $username;
-        $this->password = $password;
-        $this->charset = $charset;
-        $this->connect();
-    }
+	private string $host;
+	private string $dbname;
+	private string $username;
+	private string $password;
+	private string $charset;
+	private PDO $pdo;
+	private Dotenv $dotenv;
 
-    private function connect() {
-        $dsn = "mysql:host={$this->host};dbname={$this->dbname};charset={$this->charset}";
+	public function __construct() {
+		$this->dotenv		=	Dotenv::createImmutable('./');
+		$this->dotenv->load();
+		
+		$this->host			=	$_ENV['DATABASE_HOST'];
+		$this->dbname		=	$_ENV['DATABASE_DB'];
+		$this->username		=	$_ENV['DATABASE_USER'];
+		$this->charset		=	$_ENV['DATABASE_CHARSET'];
+		$this->password		=	$_ENV['DATABASE_PASSWORD'];
 
-        try {
-            $this->pdo = new PDO($dsn, $this->username, $this->password);
-            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOException $e) {
-            throw new PDOException("Connection failed: " . $e->getMessage());
-        }
-    }
+		$this->connect();
+	}
 
-    public function getPDO() {
-        return $this->pdo;
-    }
+	private function connect() {
+		$this->dotenv->load();
+		$dsn = $_ENV['DATABASE_DSN'] . ":host={$this->host};dbname={$this->dbname};charset={$this->charset}";
+
+		try {
+			$this->pdo	=	new PDO($dsn, $this->username, $this->password);
+			
+			$this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		} catch (PDOException $e) {
+			throw new PDOException("Connection failed: " . $e->getMessage());
+		}
+	}
+
+	public function getPDO() { return $this->pdo; }
+	
 }
