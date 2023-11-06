@@ -84,7 +84,7 @@ class ORM {
         }
     
         $statement->execute();
-        return $statement->rowCount(); // Retorna o número de linhas afetadas pela exclusão.
+        return $statement->rowCount();
     }
 
     public function update(array $data = [], array $conditions = []) {
@@ -125,7 +125,7 @@ class ORM {
         }
     
         $statement->execute();
-        return $statement->rowCount(); // Retorna o número de linhas afetadas pela atualização.
+        return $statement->rowCount();
     }
 
     public function select_like(array $columns = [], string $searchTerm) {

@@ -3,7 +3,7 @@
         'name' => 'agioslux/monlib',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '978a6be37ea6481248305d43c45c69bcff1572b5',
+        'reference' => '321442fa9c02f32befe83b6e1a66fc044a8088f2',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'agioslux/monlib' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '978a6be37ea6481248305d43c45c69bcff1572b5',
+            'reference' => '321442fa9c02f32befe83b6e1a66fc044a8088f2',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

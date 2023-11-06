@@ -7,18 +7,18 @@ use PDO;
 use PDOException;
 
 class SQLImporter {
-    private PDO $pdo;
-    protected Database $database;
+	private PDO $pdo;
+	protected Database $database;
 
-    public function __construct() {
-        $this->database =   new Database;
-        $this->pdo      =   $this->database->getPDO();
-    }
+	public function __construct() {
+		$this->database	=	new Database;
+		$this->pdo		=	$this->database->getPDO();
+	}
 
 	public function importSQLFile(string $sqlFile): bool {
 		try {
-			$sql = file_get_contents($sqlFile);
-			$statements = explode(";", $sql);
+			$sql			=	file_get_contents($sqlFile);
+			$statements		=	explode(";", $sql);
 
 			foreach ($statements as $statement) {
 				if (!empty(trim($statement))) {

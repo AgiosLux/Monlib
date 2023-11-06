@@ -31,11 +31,10 @@ class Database {
 
 	private function connect() {
 		$this->dotenv->load();
-		$dsn = $_ENV['DATABASE_DSN'] . ":host={$this->host};dbname={$this->dbname};charset={$this->charset}";
+		$dsn 			=	$_ENV['DATABASE_DSN'] . ":host={$this->host};dbname={$this->dbname};charset={$this->charset}";
 
 		try {
 			$this->pdo	=	new PDO($dsn, $this->username, $this->password);
-			
 			$this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		} catch (PDOException $e) {
 			throw new PDOException("Connection failed: " . $e->getMessage());

@@ -1,23 +1,22 @@
 <?php
 
-namespace Monlib\Controllers;
+namespace Monlib\Controllers\Lists;
 
-use Monlib\Utils\Generate;
+use Monlib\Http\Response;
 
 use Monlib\Models\ORM;
-use Monlib\Models\Database;
 
-use PDO;
+use Monlib\Utils\File;
+use Monlib\Utils\Generate;
+
 use Dotenv\Dotenv;
 
-class ListsCreate {
+class ListsCreate extends Response {
 
-	protected string $path;
-	protected string $table;
-	protected PDO $pdo;
-	protected Database $database;
-	protected Dotenv $dotenv;
 	protected ORM $orm;
+	protected string $url;
+	protected string $path;
+	protected Dotenv $dotenv;
 
 	private function createUniqueSlug(string $get_slug, string $user_id): string {
 		$i      =   1;
@@ -40,16 +39,15 @@ class ListsCreate {
 	}
 
 	public function __construct(string $table = 'lists') {
-		$this->database =   new Database;
 		$this->dotenv	=	Dotenv::createImmutable('./');
 		$this->dotenv->load();
 
-		$this->table    =   $table;
+		$this->orm		=	new ORM($table);
+		$this->url 		=	$_ENV['URL_ROOT'];
 		$this->path		=	$_ENV['STORAGE_PATH'];
-		$this->orm		=	new ORM($this->table);
 	}
 
-	public function uploadAndCreate(): void {
+	public function uploadAndCreate() {
 		if (isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
 			$fileData   =   $_FILES['file'];
 			$extFile    =   pathinfo($fileData['name'], PATHINFO_EXTENSION);
@@ -59,29 +57,39 @@ class ListsCreate {
 			if (in_array($extFile, ['txt', 'mon'])) {
 				$dest	=	$this->path . '/' . $fileName;
 		
-				if (move_uploaded_file($fileData['tmp_name'], $dest)) {
-					$inserData    	=   $this->orm->create([
-						'slug'      =>  $slug,
-						'list_file' =>  $fileName,
-						'title'     =>  $_POST['title'],
-						'user_id'   =>  $_POST['user_id'],
-						'added_in'  =>  date('Y-m-d H:i:s'),
-						'item_id'   =>  Generate::generateRandomString(36),
-						'privacy'   =>  $_POST['privacy'] ? $_POST['privacy'] : 'public',
+				if (File::move($fileData['tmp_name'], $dest)) {
+					$inserData    	=	$this->orm->create([
+						'slug'		=>	$slug,
+						'list_file'	=>	$fileName,
+						'title'     =>	$_POST['title'],
+						'user_id'   =>	$_POST['user_id'],
+						'added_in'  =>	date('Y-m-d H:i:s'),
+						'item_id'   =>	Generate::generateRandomString(36),
+						'privacy'   =>	$_POST['privacy'] ? $_POST['privacy'] : 'public',
 					]);
 		
 					if ($inserData !== false) {
-						$response = ['success' => true, 'message' => 'Created successfully.'];
+						$this->setHttpCode(200);
+						$response 		=	[
+							'success'	=>	true, 
+							'message'	=>	'Created successfully.',
+							'paimon'	=>	'paimon -r @' . $_POST['user_id'] . '/' . $slug,
+							'url'		=>	$this->url . '/' . $_POST['user_id'] . '/' . $slug,
+						];
 					} else {
+						$this->setHttpCode(500);
 						$response = ['success' => false, 'message' => 'Error saving to the database.'];
 					}
 				} else {
+					$this->setHttpCode(500);
 					$response = ['success' => false, 'message' => 'Error moving the file to the destination.'];
 				}
 			} else {
+				$this->setHttpCode(500);
 				$response = ['success' => false, 'message' => 'Invalid format error.'];
 			}
 		} else {
+			$this->setHttpCode(500);
 			$response = ['success' => false, 'message' => 'File not found in the request data.'];
 		}
 	
