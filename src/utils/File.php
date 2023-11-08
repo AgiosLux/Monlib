@@ -7,6 +7,8 @@ class File {
     public static function get(string $file) {
         if (is_file($file)) {
             return file_get_contents($file);
+        } else {
+            return 'file not exists';
         }
     }
 

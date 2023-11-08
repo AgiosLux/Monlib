@@ -14,6 +14,12 @@ class Generate {
 		);
 	}
 
+	public static function apiKey(int $size): string {
+		return bin2hex(
+			random_bytes($size)
+		);
+	}
+
 	public static function slugify(string $text): string {
 		$text	=	iconv('UTF-8', 'ASCII//TRANSLIT', $text);
 		$text	=	preg_replace('/[^a-zA-Z0-9\s-]/', '', $text);

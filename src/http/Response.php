@@ -13,8 +13,8 @@ class Response {
 	private $content;
 
 	public function __construct(int $httpCode, $content, string $contentType = 'text/html') {
-		$this->content		=		$content;
-		$this->httpCode		=		$httpCode;
+		$this->content		=	$content;
+		$this->httpCode		=	$httpCode;
 
 		$this->setContentType($contentType);
 	}

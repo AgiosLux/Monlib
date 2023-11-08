@@ -4,17 +4,34 @@ namespace Monlib\Models;
 
 use PDO;
 use PDOException;
+
 use Dotenv\Dotenv;
 
 class Database {
+	private PDO $pdo;
+	private Dotenv $dotenv;
 
 	private string $host;
 	private string $dbname;
+	private string $charset;
 	private string $username;
 	private string $password;
-	private string $charset;
-	private PDO $pdo;
-	private Dotenv $dotenv;
+
+	private function connect() {
+		$this->dotenv->load();
+
+		try {
+			$this->pdo	=	new PDO(
+				$_ENV['DATABASE_DSN'] . ":host={$this->host};dbname={$this->dbname};charset={$this->charset}", 
+				$this->username, 
+				$this->password
+			);
+
+			$this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		} catch (PDOException $e) {
+			throw new PDOException("Connection failed: " . $e->getMessage());
+		}
+	}
 
 	public function __construct() {
 		$this->dotenv		=	Dotenv::createImmutable('./');
@@ -27,18 +44,6 @@ class Database {
 		$this->password		=	$_ENV['DATABASE_PASSWORD'];
 
 		$this->connect();
-	}
-
-	private function connect() {
-		$this->dotenv->load();
-		$dsn 			=	$_ENV['DATABASE_DSN'] . ":host={$this->host};dbname={$this->dbname};charset={$this->charset}";
-
-		try {
-			$this->pdo	=	new PDO($dsn, $this->username, $this->password);
-			$this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-		} catch (PDOException $e) {
-			throw new PDOException("Connection failed: " . $e->getMessage());
-		}
 	}
 
 	public function getPDO() { return $this->pdo; }

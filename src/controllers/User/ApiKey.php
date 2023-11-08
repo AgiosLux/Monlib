@@ -4,7 +4,7 @@ namespace Monlib\Controllers\User;
 
 use Monlib\Models\ORM;
 
-class Apikey extends User {
+class ApiKey extends User {
     
     protected ORM $orm;
 

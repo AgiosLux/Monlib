@@ -17,29 +17,43 @@ class ORM {
         $this->database =   new Database;
         $this->pdo      =   $this->database->getPDO();
     }
-
-    public function select(array $conditions = []) {
-        $query = "SELECT * FROM {$this->table}";
-
+    
+    public function select(array $conditions, string|array $fields = '*', int $limit = 50, int $offset = 0) {
+        $query = "SELECT ";
+    
+        if (is_array($fields)) {
+            $query .= implode(', ', $fields);
+        } else {
+            $query .= $fields;
+        }
+    
+        $query .= " FROM {$this->table}";
+    
         if (!empty($conditions)) {
             $query .= " WHERE ";
             $whereConditions = [];
-
+    
             foreach ($conditions as $field => $value) {
                 $whereConditions[] = "$field = :$field";
             }
-
+    
             $query .= implode(" AND ", $whereConditions);
         }
-
+    
+        // Adicione a cláusula LIMIT com o valor do limite e do offset
+        $query .= " LIMIT :offset, :limit";
+    
         $statement = $this->pdo->prepare($query);
-
+    
         if (!empty($conditions)) {
             foreach ($conditions as $field => $value) {
                 $statement->bindValue(":$field", $value);
             }
         }
-
+    
+        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $statement->bindValue(':offset', $offset, PDO::PARAM_INT);
+    
         $statement->execute();
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -128,25 +142,29 @@ class ORM {
         return $statement->rowCount();
     }
 
-    public function select_like(array $columns = [], string $searchTerm) {
-        if (empty($columns) || empty($searchTerm)) {
-            return [];
+    public function select_like(array $columns, string $searchTerm, string|array $fields = '*', int $limit = 50, int $offset = 0) {
+        $query      =    "SELECT ";
+        
+        if (is_array($fields)) {
+            $query  .=  implode(', ', $fields);
+        } else {
+            $query  .=   $fields;
         }
     
-        $query = "SELECT * FROM {$this->table} WHERE ";
-        $conditions = [];
+        $conditions =   [];
+        $query      .=   " FROM {$this->table} WHERE ";
     
-        foreach ($columns as $column) {
-            $conditions[] = "$column LIKE :searchTerm";
-        }
+        foreach ($columns as $column) { $conditions[] = "$column LIKE :searchTerm"; }
     
-        $query .= implode(" OR ", $conditions);
-    
-        $statement = $this->pdo->prepare($query);
+        $query      .=   implode(" OR ", $conditions);
+        $query      .=   " LIMIT :offset, :limit";
+        $statement  =    $this->pdo->prepare($query);
+        
         $statement->bindValue(':searchTerm', "%$searchTerm%");
+        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $statement->bindValue(':offset', $offset, PDO::PARAM_INT);
     
         $statement->execute();
-    
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
     

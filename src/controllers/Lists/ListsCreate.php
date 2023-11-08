@@ -50,21 +50,22 @@ class ListsCreate extends Response {
 	public function uploadAndCreate() {
 		if (isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
 			$fileData   =   $_FILES['file'];
+			$item_id	=	Generate::generateRandomString(36);
 			$extFile    =   pathinfo($fileData['name'], PATHINFO_EXTENSION);
 			$fileName   =   Generate::generateRandomString(36) . '.' . $extFile;
 			$slug       =   $this->createUniqueSlug($_POST['title'], $_POST['user_id']);
 
 			if (in_array($extFile, ['txt', 'mon'])) {
-				$dest	=	$this->path . '/' . $fileName;
+				$dest	=	$this->path . $fileName;
 		
 				if (File::move($fileData['tmp_name'], $dest)) {
 					$inserData    	=	$this->orm->create([
 						'slug'		=>	$slug,
+						'item_id'   =>	$item_id,
 						'list_file'	=>	$fileName,
 						'title'     =>	$_POST['title'],
 						'user_id'   =>	$_POST['user_id'],
 						'added_in'  =>	date('Y-m-d H:i:s'),
-						'item_id'   =>	Generate::generateRandomString(36),
 						'privacy'   =>	$_POST['privacy'] ? $_POST['privacy'] : 'public',
 					]);
 		

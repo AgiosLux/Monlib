@@ -22,3 +22,9 @@ node_modules/
 
 # Env file
 .env
+
+# Ignore test file
+test.php
+
+# Ignore all PDF files
+*.pdf
