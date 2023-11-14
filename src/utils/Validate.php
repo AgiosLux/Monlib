@@ -52,4 +52,10 @@ class Validate {
 		return preg_match('/^[A-Z0-9]{6}-[A-Z0-9]{6}-[A-Z0-9]{6}$/', $serial);
 	}
 
+	public static function pdfFile(string $url): bool {
+		$path	=	parse_url($url, PHP_URL_PATH);
+		$ext	=	pathinfo($path, PATHINFO_EXTENSION);
+		return strtolower($ext) === 'pdf';
+	}
+
 }

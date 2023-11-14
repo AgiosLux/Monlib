@@ -3,6 +3,8 @@
 namespace Monlib\Utils;
 use Smalot\PdfParser\Parser;
 
+use Dotenv\Dotenv;
+
 class Pdf extends Misc {
 
 	public static function urlFileName(string $url): string|bool {
@@ -46,5 +48,24 @@ class Pdf extends Misc {
 
         return $data;
     }
+
+	public static function checksum(string $pdfFile): null|array {
+		$content			=	file_get_contents($pdfFile);
+	
+		if ($content !== false) {
+			return [
+				'md5'		=>	hash('md5', $content),
+				'sha1'		=>	hash('sha1', $content),
+				'sha256'	=>	hash('sha256', $content),
+			];
+		} else {
+			return null;
+		}
+	}
+
+	public static function thumbnail(string $url): string {
+		Dotenv::createImmutable('./')->load();
+		return $_ENV['URL_PDF_THUMB'] . $url;
+	}
 
 }

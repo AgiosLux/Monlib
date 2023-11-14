@@ -16,24 +16,24 @@ class ListsRead extends Response {
 	protected ORM $orm;
 	private array $fields;
 	protected string $path;
-	private string $list_id;
+	private string $listID;
 	private string $username;
 	protected Dotenv $dotenv;
 
 	private function rawUrl(): string {
-		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->username . "/" . $this->list_id . "/raw";
+		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->username . "/" . $this->listID . "/raw";
 	}
 
 	private function getCli(): string {
-		return "paimon -r @" . $this->username . "/" . $this->list_id;
+		return "paimon -r @" . $this->username . "/" . $this->listID;
 	} 
 
 	private function pageUrl(): string {
-		return $_ENV['URL_ROOT'] . "/" . $this->username . "/" . $this->list_id;
+		return $_ENV['URL_ROOT'] . "/" . $this->username . "/" . $this->listID;
 	}
 
 	private function inspectUrl(): string {
-		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->username . "/" . $this->list_id . "/inspect";
+		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->username . "/" . $this->listID . "/inspect";
 	}
 
 	private function lineContainsIgnore($line): bool {
@@ -46,11 +46,11 @@ class ListsRead extends Response {
 		}
 	}
 
-	public function __construct(string $username, string $list_id, string $table = 'lists') {
+	public function __construct(string $username, string $listID, string $table = 'lists') {
 		$this->dotenv	=	Dotenv::createImmutable('./');
 		$this->dotenv->load();
 
-		$this->list_id	=	$list_id;
+		$this->listID	=	$listID;
 		$this->username	=	$username;
 
 		$this->orm		=	new ORM($table);
@@ -63,15 +63,14 @@ class ListsRead extends Response {
 
 	public function get() {
 		$query			=	$this->orm->select([
+			'slug'		=>	$this->listID,
 			'user_id'	=>	$this->username,
-			'slug'		=>	$this->list_id,
 		], $this->fields);
 
 		if ($query != null) {
 			foreach ($query[0] as $key => $value) { $data[$key]	= $value; }
 
 			$data['cmd']	=	$this->getCli();
-
 			$data['url']	=	[
 				'raw'		=>	$this->rawUrl(),
 				'page'		=>	$this->pageUrl(),
@@ -87,35 +86,35 @@ class ListsRead extends Response {
 			$this->setHttpCode(404);
 			echo json_encode([
 				'success'	=>	false,
-				'message'	=>	'List not found'
+				'message'	=>	'Error: List not found'
 			]);
 		}
 	}
 
 	public function raw() {
 		$query			=	$this->orm->select([
+			'slug'		=>	$this->listID,
 			'user_id'	=>	$this->username,
-			'slug'		=>	$this->list_id,
 		], [ 'list_file' ]);
 
 		if ($query != null) {
 			$this->setHttpCode(200);
 
 			echo nl2br(
-				File::get($this->path . $query[0]['list_file'])
+				File::read($this->path . $query[0]['list_file'])
 			);
 		} else {
 			$this->setHttpCode(404);
 			echo json_encode([
 				'success'	=>	false,
-				'message'	=>	'List not found'
+				'message'	=>	'Error: List not found'
 			]);
 		}
 	}
 
 	public function inspect() {
 		$query			=	$this->orm->select([
-			'slug'		=>	$this->list_id,
+			'slug'		=>	$this->listID,
 			'user_id'	=>	$this->username,
 		], [ 'list_file', 'user_id', 'title' ]);
 
@@ -134,6 +133,7 @@ class ListsRead extends Response {
 							$pdf_files[]	=	[
 								'url'		=>	$pdfFile,
 								'metadata'	=>	Pdf::details($pdfFile),
+								'thumbnail'	=>	Pdf::thumbnail($pdfFile),
 								'name'		=> 	Pdf::urlFileName($pdfFile),
 								'size'		=>	Pdf::urlFileSize($pdfFile),
 								'ignore'	=>	$this->lineContainsIgnore($line) ? true : false,

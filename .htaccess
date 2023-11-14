@@ -4,8 +4,8 @@ AddDefaultCharset utf-8
 	RewriteEngine On
 	RewriteCond %{SCRIPT_FILENAME} !-f
 	RewriteCond %{SCRIPT_FILENAME} !-d
-	RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
-	RewriteRule \.(css|jpg|jpeg|wbmp|bmp|tiff|raw|png|gif)$- [NC,F,L]
+	RewriteRule ^(.*)$ index.php?urlRooter=$1 [QSA,L]
+	RewriteRule \.(css|jpg|webp|jpeg|wbmp|bmp|tiff|raw|png|gif)$- [NC,F,L]
 </IfModule>
 
 <IfModule mod_expires.c>

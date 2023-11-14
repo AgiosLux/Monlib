@@ -18,15 +18,15 @@ class ListsCreate extends Response {
 	protected string $path;
 	protected Dotenv $dotenv;
 
-	private function createUniqueSlug(string $get_slug, string $user_id): string {
+	private function createUniqueSlug(string $slug, string $username): string {
 		$i      =   1;
-		$slug   =   Generate::slugify($get_slug);
+		$slug   =   Generate::slugify($slug);
 	
 		while (true) {
 			$candidateSlug  =    $i > 1 ? "$slug-$i" : $slug;
 
 			$query			=	$this->orm->select([
-				'user_id'	=>	$user_id,
+				'user_id'	=>	$username,
 				'slug'		=>	$candidateSlug,
 			]);
 	
@@ -50,8 +50,8 @@ class ListsCreate extends Response {
 	public function uploadAndCreate() {
 		if (isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
 			$fileData   =   $_FILES['file'];
-			$item_id	=	Generate::generateRandomString(36);
-			$extFile    =   pathinfo($fileData['name'], PATHINFO_EXTENSION);
+			$extFile    =   File::ext($fileData['name']);
+			$itemID		=	Generate::generateRandomString(36);
 			$fileName   =   Generate::generateRandomString(36) . '.' . $extFile;
 			$slug       =   $this->createUniqueSlug($_POST['title'], $_POST['user_id']);
 
@@ -61,7 +61,7 @@ class ListsCreate extends Response {
 				if (File::move($fileData['tmp_name'], $dest)) {
 					$inserData    	=	$this->orm->create([
 						'slug'		=>	$slug,
-						'item_id'   =>	$item_id,
+						'item_id'   =>	$itemID,
 						'list_file'	=>	$fileName,
 						'title'     =>	$_POST['title'],
 						'user_id'   =>	$_POST['user_id'],
@@ -79,19 +79,19 @@ class ListsCreate extends Response {
 						];
 					} else {
 						$this->setHttpCode(500);
-						$response = ['success' => false, 'message' => 'Error saving to the database.'];
+						$response = ['success' => false, 'message' => 'Error: saving to the database.'];
 					}
 				} else {
 					$this->setHttpCode(500);
-					$response = ['success' => false, 'message' => 'Error moving the file to the destination.'];
+					$response = ['success' => false, 'message' => 'Error: moving the file to the destination.'];
 				}
 			} else {
 				$this->setHttpCode(500);
-				$response = ['success' => false, 'message' => 'Invalid format error.'];
+				$response = ['success' => false, 'message' => 'Error: Invalid format error.'];
 			}
 		} else {
 			$this->setHttpCode(500);
-			$response = ['success' => false, 'message' => 'File not found in the request data.'];
+			$response = ['success' => false, 'message' => 'Error: File not found in the request data.'];
 		}
 	
 		echo json_encode($response);

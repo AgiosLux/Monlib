@@ -28,17 +28,4 @@ class Request {
 
 	public function getQueryParams() { return $this->queryParams; }
 
-	public function getApiKey(bool $authHeader = false, string $header = 'x-api-key'): string {
-		$headers		=	$this->headers;
-
-		if ($authHeader) {
-			return $headers[$header];
-		} else {
-			$apiKey		=	$headers['Authorization'];
-	
-			preg_match('/^Bearer\s+(.*?)$/', $apiKey, $matches);
-			return $matches[1];
-		}
-	}
-
 }

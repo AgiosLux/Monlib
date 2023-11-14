@@ -10,8 +10,8 @@ use Monlib\Controllers\Pages\Home;
 
 use Dotenv\Dotenv;
 
+Dotenv::createImmutable('./')->load();
 $xUrl		=	explode('/', $_GET['url']);
-$dotenv		=	Dotenv::createImmutable('./')->load();
 $pages		=	new Router($_ENV['URL_ROOT']);
 
 View::init([
