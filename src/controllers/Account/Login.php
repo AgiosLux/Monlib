@@ -83,9 +83,11 @@ class Login extends Response {
 	}
 
 	public function doLogoff(): void {
-		if (Cookies::delete($this->cookie)) {
-			$this->setHttpCode(200);
+		Cookies::delete($this->cookie);
 
+		if (Cookies::has($this->cookie) != true) {
+			$this->setHttpCode(200);
+	
 			echo json_encode([
 				"success"	=>	true,
 				"message"	=>	"Logoff with successfully.",

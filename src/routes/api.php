@@ -33,6 +33,48 @@ $router->get('/api/account/logoff', [
 	}
 ]);
 
+$router->post('/api/api-keys/create', [
+	function () {
+		$apiKey	=	new Monlib\Controllers\User\ApiKey;
+		return new Response(0, $apiKey->generateNewKey(), 'application/json');
+	}
+]);
+
+$router->post('/api/api-keys/change-status/{key}', [
+	function ($key) {
+		$apiKey	=	new Monlib\Controllers\User\ApiKey;
+		return new Response(0, $apiKey->changeStatusKey($key), 'application/json');
+	}
+]);
+
+$router->post('/api/api-keys/edit/{key}', [
+	function ($key) {
+		$apiKey	=	new Monlib\Controllers\User\ApiKey;
+		return new Response(0, $apiKey->editKey($key), 'application/json');
+	}
+]);
+
+$router->delete('/api/api-keys/delete/{key}', [
+	function ($key) {
+		$apiKey	=	new Monlib\Controllers\User\ApiKey;
+		return new Response(0, $apiKey->deleteKey($key), 'application/json');
+	}
+]);
+
+$router->get('/api/api-keys/list', [
+	function ($key) {
+		$apiKey	=	new Monlib\Controllers\User\ApiKey;
+		return new Response(0, $apiKey->listAllKeys(), 'application/json');
+	}
+]);
+
+$router->get('/api/api-keys/get/{key}', [
+	function ($key) {
+		$apiKey	=	new Monlib\Controllers\User\ApiKey;
+		return new Response(0, $apiKey->getKey($key), 'application/json');
+	}
+]);
+
 $router->get('/api/account/check-logged', [
 	function () {
 		$login	=	new Monlib\Controllers\Account\Login;
