@@ -29,6 +29,6 @@ class Cookies {
 		);
 	}
 
-	public static function get(string $name): string { return $_COOKIE[$name]; }
+	public static function get(string $name) { return $_COOKIE[$name]; }
 
 }

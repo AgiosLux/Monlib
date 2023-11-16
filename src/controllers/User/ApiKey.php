@@ -61,6 +61,7 @@ class ApiKey extends Response {
 	public function isValid(string $key): bool {
 		if (Validate::apiKey($key)) {
 			$query			=	$this->orm->count([
+				'status'	=>	'actived',
 				'api_key'	=>	$this->crypto->encrypt($key),
 			]);
 	

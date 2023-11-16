@@ -5,16 +5,24 @@ namespace Monlib\Controllers\Lists;
 use Monlib\Models\ORM;
 use Monlib\Utils\File;
 use Monlib\Http\Response;
+use Monlib\Http\Callback;
 use Monlib\Utils\Generate;
+use Monlib\Controllers\User\User;
+use Monlib\Controllers\User\ApiKey;
+use Monlib\Controllers\Account\Login;
 
 use Dotenv\Dotenv;
 
 class ListsCreate extends Response {
 
 	protected ORM $orm;
+	protected User $user;
 	protected string $url;
+	protected Login $login;
 	protected string $path;
 	protected Dotenv $dotenv;
+	protected ApiKey $apiKey;
+	protected Callback $callback;
 
 	private function createUniqueSlug(string $slug, string $username): string {
 		$i      =   1;
@@ -40,61 +48,85 @@ class ListsCreate extends Response {
 		$this->dotenv	=	Dotenv::createImmutable('./');
 		$this->dotenv->load();
 
+		$this->user		=	new User;
+		$this->login	=	new Login;
+		$this->apiKey	=	new ApiKey;
+		$this->callback	=	new Callback;
 		$this->orm		=	new ORM($table);
+
 		$this->url 		=	$_ENV['URL_ROOT'];
 		$this->path		=	$_ENV['STORAGE_PATH'];
 	}
 
 	public function uploadAndCreate() {
 		if (isset($_FILES['file']) && $_FILES['file']['error'] === 0) {
-			$fileData   =   $_FILES['file'];
-			$extFile    =   File::ext($fileData['name']);
-			$itemID		=	Generate::generateRandomString(36);
-			$fileName   =   Generate::generateRandomString(36) . '.' . $extFile;
-			$slug       =   $this->createUniqueSlug($_POST['title'], $_POST['user_id']);
+			$apiKey		=	$this->callback->getApiKey();
 
-			if (in_array($extFile, ['txt', 'mon'])) {
-				$dest	=	$this->path . $fileName;
-		
-				if (File::move($fileData['tmp_name'], $dest)) {
-					$insertData    	=	$this->orm->create([
-						'slug'		=>	$slug,
-						'item_id'   =>	$itemID,
-						'list_file'	=>	$fileName,
-						'title'     =>	$_POST['title'],
-						'user_id'   =>	$_POST['user_id'],
-						'added_in'  =>	date('Y-m-d H:i:s'),
-						'privacy'   =>	$_POST['privacy'] ? $_POST['privacy'] : 'public',
-					]);
-		
-					if ($insertData !== false) {
-						$this->setHttpCode(200);
-						$httpCodeError	=	200;
-						$response 		=	[
-							'success'	=>	true, 
-							'message'	=>	'Created successfully.',
-							'paimon'	=>	'paimon -r @' . $_POST['user_id'] . '/' . $slug,
-							'url'		=>	$this->url . '/' . $_POST['user_id'] . '/' . $slug,
-						];
+			if ($this->apiKey->isValid($apiKey) || $this->login->hasLogged()) {
+				$fileData   =   $_FILES['file'];
+				$extFile    =   File::ext($fileData['name']);
+				$apiKey		=	$this->callback->getApiKey();
+				$itemID		=	Generate::generateRandomString(36);
+				$fileName   =   Generate::generateRandomString(36) . '.' . $extFile;
+				$userMode	=	$this->apiKey->isValid($apiKey) ? 'apiKey' : 'userID';
+				$userID		=	$this->apiKey->isValid($apiKey) ? $this->apiKey->getUserID($apiKey) : $this->login->getUserID();
+
+				if (in_array($extFile, ['txt', 'mon'])) {
+					$dest	=	$this->path . $fileName;
+			
+					if (File::move($fileData['tmp_name'], $dest)) {
+						$slug       	=   $this->createUniqueSlug($_POST['title'], $userID);
+						$insertData    	=	$this->orm->create([
+							'slug'		=>	$slug,
+							'item_id'   =>	$itemID,
+							'user_id'   =>	$userID,
+							'list_file'	=>	$fileName,
+							'mode'		=>	$userMode,
+							'title'     =>	$_POST['title'],
+							'added_in'  =>	date('Y-m-d H:i:s'),
+							'privacy'   =>	$_POST['privacy'] ? $_POST['privacy'] : 'public',
+						]);
+			
+						if ($insertData !== false) {
+							$username			=	$this->user->getUsernameByUserId($userID);
+
+							$this->setHttpCode(200);
+
+							$httpCodeError		=	200;
+							$response 			=	[
+								'success'		=>	true,
+								'data'			=>	[
+									'message'	=>	'Created successfully.',
+									'paimon'	=>	"paimon -r @$username/$slug",
+									'url'		=>	$this->url . '/' . $username . '/' . $slug,
+								]
+							];
+						} else {
+							$httpCodeError		=	500;
+							$response			=	[
+								'success'		=>	false, 
+								'message'		=>	'Error: saving to the database.'
+							];
+						}
 					} else {
 						$httpCodeError	=	500;
 						$response		=	[
 							'success'	=>	false, 
-							'message'	=>	'Error: saving to the database.'
+							'message'	=>	'Error: moving the file to the destination.'
 						];
 					}
 				} else {
 					$httpCodeError	=	500;
 					$response		=	[
-						'success'	=>	false, 
-						'message'	=>	'Error: moving the file to the destination.'
+						'success'	=>	false,
+						'message'	=>	'Error: Invalid format error.'
 					];
 				}
 			} else {
-				$httpCodeError	=	500;
+				$httpCodeError	=	401;
 				$response		=	[
-					'success'	=>	false,
-					'message'	=>	'Error: Invalid format error.'
+					'success'	=>	false, 
+					'message'	=>	'Error: api key is invalid or user not logged.'
 				];
 			}
 		} else {

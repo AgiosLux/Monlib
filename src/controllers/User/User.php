@@ -34,6 +34,24 @@ class User extends Response {
 		return false;
 	}
 
+	public function getUsernameByUserId(int $userID): string {
+		$query		=	$this->orm->select([
+			'id'	=>	$userID,
+		], [ '*' ]);
+
+		if ($query !== null) { return $query[0]['username']; }
+		return false;
+	}
+
+	public function getUserIdByUsername(string $username) {
+		$query			=	$this->orm->select([
+			'username'	=>	$username,
+		], [ 'id' ]);
+
+		if (count($query) > 0) { return $query[0]['id']; }
+		return false;
+	}
+
 	public function verifyAvaliableUsername(): void { 
 		$this->setHttpCode(200);
 
