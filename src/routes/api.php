@@ -12,6 +12,34 @@ Dotenv::createImmutable('./')->load();
 $router		=	new Router($_ENV['URL_ROOT']);
 $xUrl		=	explode('/', $_GET['urlRooter']);
 
+$router->post('/api/account/login', [
+	function () {
+		$login	=	new Monlib\Controllers\Account\Login;
+		return new Response(0, $login->loginAccount(), 'application/json');
+	}
+]);
+
+$router->post('/api/account/register', [
+	function () {
+		$register	=	new Monlib\Controllers\Account\Register;
+		return new Response(0, $register->createAccount(), 'application/json');
+	}
+]);
+
+$router->get('/api/account/logoff', [
+	function () {
+		$login	=	new Monlib\Controllers\Account\Login;
+		return new Response(0, $login->doLogoff(), 'application/json');
+	}
+]);
+
+$router->get('/api/account/check-logged', [
+	function () {
+		$login	=	new Monlib\Controllers\Account\Login;
+		return new Response(0, $login->checkUserLogged(), 'application/json');
+	}
+]);
+
 $router->get('/api/tools/inspect', [
 	function () {
 		$inspect	=	new Monlib\Controllers\Tools\Inspect($_GET['url']);

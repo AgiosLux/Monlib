@@ -5,9 +5,9 @@ namespace Monlib\Controllers\Lists;
 use Monlib\Utils\Pdf;
 use Monlib\Utils\File;
 use Monlib\Utils\Misc;
-
 use Monlib\Models\ORM;
 use Monlib\Http\Response;
+use Monlib\Http\Callback;
 
 use Dotenv\Dotenv;
 
@@ -19,6 +19,7 @@ class ListsRead extends Response {
 	private string $listID;
 	private string $username;
 	protected Dotenv $dotenv;
+	protected Callback $callback;
 
 	private function rawUrl(): string {
 		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->username . "/" . $this->listID . "/raw";
@@ -53,6 +54,7 @@ class ListsRead extends Response {
 		$this->listID	=	$listID;
 		$this->username	=	$username;
 
+		$this->callback	=	new Callback;
 		$this->orm		=	new ORM($table);
 		$this->path		=	$_ENV['STORAGE_PATH'];
 
@@ -95,14 +97,11 @@ class ListsRead extends Response {
 		$query			=	$this->orm->select([
 			'slug'		=>	$this->listID,
 			'user_id'	=>	$this->username,
-		], [ 'list_file' ]);
+		], [ 'list_file', 'privacy' ]);
 
 		if ($query != null) {
 			$this->setHttpCode(200);
-
-			echo nl2br(
-				File::read($this->path . $query[0]['list_file'])
-			);
+			echo File::read($this->path . $query[0]['list_file']);
 		} else {
 			$this->setHttpCode(404);
 			echo json_encode([

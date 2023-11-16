@@ -4,11 +4,11 @@ namespace Monlib\Controllers\User;
 
 use Monlib\Models\ORM;
 
-class ApiKey extends User {
+class Profile {
     
     protected ORM $orm;
 
-	public function __construct(string $table = 'api_keys') {
+	public function __construct(string $table = 'users') {
 		$this->orm		=	new ORM($table);
 	}
 

@@ -2,7 +2,7 @@
 
 namespace Monlib\Models;
 
-use Monlib\models\Database;
+use Monlib\Models\Database;
 
 use PDO;
 
@@ -195,5 +195,61 @@ class ORM {
     
         return intval($result['total']);
     }
+
+	public function innerJoin(string $tableToJoin, string $onCondition, array $conditions = [], array|string $fields = '*', int $limit = 50, int $offset = 0) {
+		return $this->join('INNER JOIN', $tableToJoin, $onCondition, $conditions, $fields, $limit, $offset);
+	}
+	
+	public function leftJoin(string $tableToJoin, string $onCondition, array $conditions = [], array|string $fields = '*', int $limit = 50, int $offset = 0) {
+		return $this->join('LEFT JOIN', $tableToJoin, $onCondition, $conditions, $fields, $limit, $offset);
+	}
+	
+	public function rightJoin(string $tableToJoin, string $onCondition, array $conditions = [], array|string $fields = '*', int $limit = 50, int $offset = 0) {
+		return $this->join('RIGHT JOIN', $tableToJoin, $onCondition, $conditions, $fields, $limit, $offset);
+	}
+	
+	public function fullJoin(string $tableToJoin, string $onCondition, array $conditions = [], array|string $fields = '*', int $limit = 50, int $offset = 0) {
+		return $this->join('FULL JOIN', $tableToJoin, $onCondition, $conditions, $fields, $limit, $offset);
+	}
+	
+	private function join(string $type, string $tableToJoin, string $onCondition, array $conditions = [], array|string $fields = '*', int $limit = 50, int $offset = 0) {
+		$query = "SELECT ";
+	
+		if (is_array($fields)) {
+			$query .= implode(', ', $fields);
+		} else {
+			$query .= $fields;
+		}
+	
+		$query .= " FROM {$this->table} {$type} {$tableToJoin} ON {$onCondition}";
+	
+		if (!empty($conditions)) {
+			$query .= " WHERE ";
+			$whereConditions = [];
+	
+			foreach ($conditions as $field => $value) {
+				$whereConditions[] = "$field = :$field";
+			}
+	
+			$query .= implode(" AND ", $whereConditions);
+		}
+	
+		// Adicione a cláusula LIMIT com o valor do limite e do offset
+		$query .= " LIMIT :offset, :limit";
+	
+		$statement = $this->pdo->prepare($query);
+	
+		if (!empty($conditions)) {
+			foreach ($conditions as $field => $value) {
+				$statement->bindValue(":$field", $value);
+			}
+		}
+	
+		$statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+		$statement->bindValue(':offset', $offset, PDO::PARAM_INT);
+	
+		$statement->execute();
+		return $statement->fetchAll(PDO::FETCH_ASSOC);
+	}	
 
 }

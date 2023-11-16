@@ -2,11 +2,9 @@
 
 namespace Monlib\Controllers\Lists;
 
-use Monlib\Http\Response;
-
 use Monlib\Models\ORM;
-
 use Monlib\Utils\File;
+use Monlib\Http\Response;
 use Monlib\Utils\Generate;
 
 use Dotenv\Dotenv;
@@ -59,7 +57,7 @@ class ListsCreate extends Response {
 				$dest	=	$this->path . $fileName;
 		
 				if (File::move($fileData['tmp_name'], $dest)) {
-					$inserData    	=	$this->orm->create([
+					$insertData    	=	$this->orm->create([
 						'slug'		=>	$slug,
 						'item_id'   =>	$itemID,
 						'list_file'	=>	$fileName,
@@ -69,8 +67,9 @@ class ListsCreate extends Response {
 						'privacy'   =>	$_POST['privacy'] ? $_POST['privacy'] : 'public',
 					]);
 		
-					if ($inserData !== false) {
+					if ($insertData !== false) {
 						$this->setHttpCode(200);
+						$httpCodeError	=	200;
 						$response 		=	[
 							'success'	=>	true, 
 							'message'	=>	'Created successfully.',
@@ -78,22 +77,35 @@ class ListsCreate extends Response {
 							'url'		=>	$this->url . '/' . $_POST['user_id'] . '/' . $slug,
 						];
 					} else {
-						$this->setHttpCode(500);
-						$response = ['success' => false, 'message' => 'Error: saving to the database.'];
+						$httpCodeError	=	500;
+						$response		=	[
+							'success'	=>	false, 
+							'message'	=>	'Error: saving to the database.'
+						];
 					}
 				} else {
-					$this->setHttpCode(500);
-					$response = ['success' => false, 'message' => 'Error: moving the file to the destination.'];
+					$httpCodeError	=	500;
+					$response		=	[
+						'success'	=>	false, 
+						'message'	=>	'Error: moving the file to the destination.'
+					];
 				}
 			} else {
-				$this->setHttpCode(500);
-				$response = ['success' => false, 'message' => 'Error: Invalid format error.'];
+				$httpCodeError	=	500;
+				$response		=	[
+					'success'	=>	false,
+					'message'	=>	'Error: Invalid format error.'
+				];
 			}
 		} else {
-			$this->setHttpCode(500);
-			$response = ['success' => false, 'message' => 'Error: File not found in the request data.'];
+			$httpCodeError	=	500;
+			$response		=	[
+				'success'	=>	false, 
+				'message'	=>	'Error: File not found in the request data.'
+			];
 		}
-	
+
+		$this->setHttpCode($httpCodeError);
 		echo json_encode($response);
 	}
 
