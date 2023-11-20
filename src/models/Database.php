@@ -11,6 +11,7 @@ class Database {
 	private PDO $pdo;
 	private Dotenv $dotenv;
 
+	private string $url;
 	private string $host;
 	private string $dbname;
 	private string $charset;
@@ -22,7 +23,7 @@ class Database {
 
 		try {
 			$this->pdo	=	new PDO(
-				$_ENV['DATABASE_DSN'] . ":host={$this->host};dbname={$this->dbname};charset={$this->charset}", 
+				$this->url, 
 				$this->username, 
 				$this->password
 			);
@@ -42,9 +43,20 @@ class Database {
 		$this->username		=	$_ENV['DATABASE_USER'];
 		$this->charset		=	$_ENV['DATABASE_CHARSET'];
 		$this->password		=	$_ENV['DATABASE_PASSWORD'];
-
+		$this->url			=	$_ENV['DATABASE_DSN'] . ":host={$this->host};dbname={$this->dbname};charset={$this->charset}";
+		
 		$this->connect();
 	}
+
+	public function getUsername() { return $this->username; }
+
+	public function getPassword() { return $this->password; }
+
+	public function getDatabase() { return $this->dbname; }
+
+	public function getHost() { return $this->host; }
+
+	public function getUrl() { return $this->url; }
 
 	public function getPDO() { return $this->pdo; }
 	

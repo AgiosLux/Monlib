@@ -46,6 +46,7 @@ AddDefaultCharset utf-8
 	
 	RewriteRule '\.css\.gz$' '-' [T=text/css,E=no-gzip:1]
 	RewriteRule '\.js\.gz$' '-' [T=text/javascript,E=no-gzip:1]
+	
 	<FilesMatch '(\.js\.gz|\.css\.gz)$'>
 		Header append Vary Accept-Encoding
 		Header append Content-Encoding gzip
@@ -55,6 +56,31 @@ AddDefaultCharset utf-8
 <Files ~"\.(md|sh|env|ini|log|json|htaccess|htpasswd|gitignore|gitattributes|lock)$">
 	Order allow,deny
 	Deny from all
+</Files>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^migrations/ - [F,L]
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^public/ - [F,L]
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^resources/ - [F,L]
+</IfModule>
+
+<Files "composer.json">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+<Files "composer.lock">
+    Order Deny,Allow
+    Deny from all
 </Files>
 
 Options -Indexes

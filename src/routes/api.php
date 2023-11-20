@@ -26,6 +26,13 @@ $router->post('/api/account/register', [
 	}
 ]);
 
+$router->get('/api/account/check-logged', [
+	function () {
+		$login	=	new Monlib\Controllers\Account\Login;
+		return new Response(0, $login->checkUserLogged(), 'application/json');
+	}
+]);
+
 $router->get('/api/account/logoff', [
 	function () {
 		$login	=	new Monlib\Controllers\Account\Login;
@@ -72,13 +79,6 @@ $router->get('/api/api-keys/get/{key}', [
 	function ($key) {
 		$apiKey	=	new Monlib\Controllers\User\ApiKey;
 		return new Response(0, $apiKey->getKey($key), 'application/json');
-	}
-]);
-
-$router->get('/api/account/check-logged', [
-	function () {
-		$login	=	new Monlib\Controllers\Account\Login;
-		return new Response(0, $login->checkUserLogged(), 'application/json');
 	}
 ]);
 
