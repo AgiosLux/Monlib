@@ -6,7 +6,7 @@ $importTables   =   new Monlib\Models\Migrations\ImportTables;
 $exportTables   =   new Monlib\Models\Migrations\ExportTables;
 
 if ($argv[1] == "import") {
-    if (isset($argv[2]) && isset($argv[3])) {
+    if (isset($argv[2])) {
         $importTables->importFromFile($argv[2], $argv[3]);
     } else {
         return throw(

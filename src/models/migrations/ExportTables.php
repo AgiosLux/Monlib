@@ -6,6 +6,7 @@ use Monlib\Models\Database;
 
 use PDO;
 use DateTime;
+use PDOException;
 use RuntimeException;
 
 class ExportTables {
@@ -18,7 +19,7 @@ class ExportTables {
 		$this->pdo		=	$this->database->getPDO();    
 	}
 
-	public function exportAllTables() {
+	private function exportAllTablesToJson() {
 		$allTablesData	=	[];
 		$tablesName		=	[];
 		$tables			=	$this->getTables();
@@ -52,16 +53,30 @@ class ExportTables {
 
 	private function getTableData(string $tableName) {
 		$tableType			=	$this->getTableType($tableName);
+        $tableComment		=	$this->getTableComment($tableName);
 		$columns			=	$this->getTableColumns($tableName);
 		$collation			=	$this->getTableCollation($tableName);
+        $foreignKeys    	=	$this->getTableForeignKeys($tableName);
 
 		return [
 			'table_name'	=>	$tableName,
 			'collate'		=>	$collation,
 			'table_type'	=>	$tableType,
+            'foreign_keys'	=>	$foreignKeys,
+            'table_comment'	=>	$tableComment,
 			'columns'		=>	$columns,
 		];
 	}
+
+    private function getTableComment(string $tableName) {
+        $sql			=	"SHOW TABLE STATUS LIKE :tableName";
+        $stmt			=	$this->pdo->prepare($sql);
+        $stmt->bindParam(':tableName', $tableName, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $tableStatus	=	$stmt->fetch(PDO::FETCH_ASSOC);
+        return isset($tableStatus['Comment']) ? $tableStatus['Comment'] : null;
+    }
 
 	Private function getTableCollation(string $tableName) {
 		$sql			=	"SHOW TABLE STATUS LIKE :tableName";
@@ -74,14 +89,37 @@ class ExportTables {
 	}
 
 	private function getTableType(string $tableName) {
-		$sql = "SHOW TABLE STATUS LIKE :tableName";
-		$stmt = $this->pdo->prepare($sql);
+		$sql			=	"SHOW TABLE STATUS LIKE :tableName";
+		$stmt			=	$this->pdo->prepare($sql);
 		$stmt->bindParam(':tableName', $tableName, PDO::PARAM_STR);
 		$stmt->execute();
-		$tableStatus = $stmt->fetch(PDO::FETCH_ASSOC);
-	
+
+		$tableStatus	=	$stmt->fetch(PDO::FETCH_ASSOC);
 		return isset($tableStatus['Engine']) ? $tableStatus['Engine'] : null;
 	}
+
+    private function getTableForeignKeys(string $tableName) {
+        $sql					=	"SHOW CREATE TABLE $tableName";
+        $stmt					=	$this->pdo->query($sql);
+        $tableCreate			=	$stmt->fetch(PDO::FETCH_ASSOC);
+
+        $foreignKeys			=	[];
+
+        if (isset($tableCreate['Create Table'])) {
+            $tableCreateSql		=	$tableCreate['Create Table'];
+            preg_match_all('/FOREIGN KEY \(`(.+?)`\) REFERENCES `(.+?)` \(`(.+?)`\)/', $tableCreateSql, $matches, PREG_SET_ORDER);
+
+            foreach ($matches as $match) {
+                $foreignKeys[]			=	[
+                    'column'			=>	$match[1],
+                    'referenced_table'	=>	$match[2],
+                    'referenced_column'	=>	$match[3],
+                ];
+            }
+        }
+
+        return $foreignKeys;
+    }
 
 	private function getTableColumns(string $tableName) {
 		$sql					=	"SHOW COLUMNS FROM $tableName";
@@ -94,9 +132,11 @@ class ExportTables {
 			$formattedColumn		=	[
 				'name'				=>	$column['Field'],
 				'type'				=>	$column['Type'],
+				'default'			=>	$column['Default'],
+				'extra'				=>	$column['Extra'],
+				'comment'			=>	$column['Comment'],
 				'primary_key'		=>	$column['Key'] === 'PRI',
 				'unique'			=>	$column['Key'] === 'UNI',
-				'default'			=>	$column['Default'],
 			];
 	
 			if (stripos($column['Default'], 'CURRENT_TIMESTAMP') !== false) {
@@ -113,6 +153,14 @@ class ExportTables {
 		}
 
 		return $formattedColumns;
+	}
+	
+	public function exportAllTables() {
+		try {
+			$this->exportAllTablesToJson();
+		} catch (PDOException $e) {
+			echo 'Connection error: ' . $e->getMessage();
+		}
 	}
 
 }
