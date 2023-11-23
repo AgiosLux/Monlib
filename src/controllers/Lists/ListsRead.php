@@ -28,19 +28,19 @@ class ListsRead extends Response {
 	protected Callback $callback;
 
 	private function rawUrl(): string {
-		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->username . "/" . $this->listID . "/raw";
+		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/raw";
 	}
 
 	private function getCli(): string {
-		return "paimon -r @" . $this->username . "/" . $this->listID;
-	} 
+		return "paimon -r @" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID;
+	}
 
 	private function pageUrl(): string {
-		return $_ENV['URL_ROOT'] . "/" . $this->username . "/" . $this->listID;
+		return $_ENV['URL_ROOT'] . "/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID;
 	}
 
 	private function inspectUrl(): string {
-		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->username . "/" . $this->listID . "/inspect";
+		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/inspect";
 	}
 
 	private function lineContainsIgnore($line): bool {
@@ -252,8 +252,8 @@ class ListsRead extends Response {
 								'total_links'	=>	$total,
 								'pdf_files'		=>	$pdf_files,
 								'title'			=>	$query[0]['title'],
-								'author'		=>	$query[0]['user_id'],
-								'dataset_size'	=>	Misc::formatBytes(File::size($file_path))
+								'dataset_size'	=>	Misc::formatBytes(File::size($file_path)),
+								'author'		=>	$this->user->getUsernameByUserId($query[0]['user_id']),
 							]);
 						}
 					} else {
