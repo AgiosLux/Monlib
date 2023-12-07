@@ -110,6 +110,12 @@ $router->get('/api/lists/{username}/{listID}/{section}', [
 			case 'details':
 				return new Response(0, $listsRead->get(), 'application/json');
 
+			case 'download':
+				return new Response(0, $listsRead->download($_GET['no-ignore']), 'application/json');
+
+			case 'qrcode':
+				return new Response(0, $listsRead->qrCode(), 'image/svg+xml');
+
 			default:
 				return new Response(404, 'URL not found', 'application/json');
 		}

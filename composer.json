@@ -15,6 +15,8 @@
     ],
     "require": {
         "vlucas/phpdotenv": "^5.5",
-        "smalot/pdfparser": "^2.7"
+        "smalot/pdfparser": "^2.7",
+        "chillerlan/php-qrcode": "^5.0",
+        "maennchen/zipstream-php": "^3.1"
     }
 }

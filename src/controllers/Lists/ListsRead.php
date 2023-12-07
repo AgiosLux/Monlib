@@ -2,17 +2,17 @@
 
 namespace Monlib\Controllers\Lists;
 
-use Monlib\Utils\Pdf;
-use Monlib\Utils\File;
-use Monlib\Utils\Misc;
 use Monlib\Models\ORM;
-use Monlib\Http\Response;
-use Monlib\Http\Callback;
-use Monlib\Controllers\User\User;
-use Monlib\Controllers\User\ApiKey;
+use Monlib\Utils\{Pdf, File, Misc};
+use Monlib\Http\{Response, Callback};
 use Monlib\Controllers\Account\Login;
+use Monlib\Controllers\User\{User, ApiKey};
+
+use chillerlan\QRCode\Common\EccLevel;
+use chillerlan\QRCode\{QRCode, QROptions};
 
 use Dotenv\Dotenv;
+use ZipStream\ZipStream;
 
 class ListsRead extends Response {
 
@@ -43,13 +43,61 @@ class ListsRead extends Response {
 		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/inspect";
 	}
 
-	private function lineContainsIgnore($line): bool {
+	private function qrCodeUrl(): string {
+		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/qrcode";
+	}
+
+	private function lineContainsIgnore(string $line): bool {
 		$position = strpos($line, '!ignore');
 		
 		if ($position !== false) {
 			return true;
 		} else {
 			return false;
+		}
+	}
+
+	private function downloadUrl(bool $no_ignore = false): string {
+		if ($no_ignore) {
+			return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/download?no-ignore=true";
+		}
+
+		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/download";
+	}
+
+	private function runDownloadPdfFiles(string $path, string $title, string $no_ignore = null) {
+		if (file_exists($path)) {
+			$file	=	fopen($path, 'r');
+
+			$zip	=	new ZipStream(
+				sendHttpHeaders: true,
+				outputName: "$title.zip",
+			);
+
+			if ($file) {
+				while (($line = fgets($file)) !== false) {
+					if (Misc::hasUrl($line)) {
+						$pdfFile		=	Misc::getUrl($line);
+
+						if (!isset($no_ignore) || $no_ignore == null) {
+							if ($this->lineContainsIgnore($line)) {
+								$zip->addFile(
+									data: Pdf::urlFileContent($pdfFile),
+									fileName: Pdf::urlFileName($pdfFile),
+								);
+							}
+						} else if ($no_ignore == 'true') {
+							$zip->addFile(
+								data: Pdf::urlFileContent($pdfFile),
+								fileName: Pdf::urlFileName($pdfFile),
+							);
+						}
+					}
+				}
+			}
+
+			fclose($file);
+			$zip->finish();
 		}
 	}
 
@@ -93,11 +141,17 @@ class ListsRead extends Response {
 
 				unset($data['user_id']);
 
-				$data['cmd']	=	$this->getCli();
-				$data['url']	=	[
-					'raw'		=>	$this->rawUrl(),
-					'page'		=>	$this->pageUrl(),
-					'inspect'	=>	$this->inspectUrl(),
+				$data['url']		=	[
+					'raw'			=>	$this->rawUrl(),
+					'page'			=>	$this->pageUrl(),
+					'qrcode'		=>	$this->qrCodeUrl(),
+					'inspect'		=>	$this->inspectUrl(),
+				];
+
+				$data['download']	=	[
+					'cli'			=>	$this->getCli(),
+					'main'			=>	$this->downloadUrl(),
+					'no_ignore'		=>	$this->downloadUrl(true),
 				];
 	
 				if ($data["privacy"] == "private") {
@@ -185,6 +239,21 @@ class ListsRead extends Response {
 		}
 	}
 
+	public function qrCode() {
+		$options 				=	new QROptions([
+			'version'			=>	7,
+			'circleRadius'		=>	0.4,
+			'outputBase64'		=>	false,
+			'eccLevel'			=>	EccLevel::H,
+			'outputInterface'	=>	\QRGdRounded::class,
+		]);
+		
+		header("Content-Type: image/svg+xml");
+		echo (new QRCode($options))->render(
+			$this->pageUrl()
+		);
+	}
+
 	public function inspect() {
 		if (!in_array($this->username, ['', null, false])) {
 			$apiKey			=	$this->callback->getApiKey();
@@ -202,7 +271,7 @@ class ListsRead extends Response {
 
 					if ($file) {
 						while (($line = fgets($file)) !== false) {
-							if (preg_match('/\bhttps?:\/\/\S+\b/', $line)) {
+							if (Misc::hasUrl($line)) {
 								$pdfFile		=	Misc::getUrl($line);
 
 								$pdf_files[]	=	[
@@ -245,7 +314,7 @@ class ListsRead extends Response {
 									'message'	=>	'Error: List is private'
 								]);
 							}
-						} else if ($query[0]['privacy'] == 'public') {
+						} else {
 							$this->setHttpCode(200);
 							echo json_encode([
 								'success'		=>	true,
@@ -260,21 +329,21 @@ class ListsRead extends Response {
 						$this->setHttpCode(500);
 						echo json_encode([
 							'success'	=>	false,
-							'message'	=>	'Could not open the file'
+							'message'	=>	'Error: Could not open the file'
 						]);
 					}
 				} else {
 					$this->setHttpCode(404);
 					echo json_encode([
 						'success'	=>	false,
-						'message'	=>	'File list not found'
+						'message'	=>	'Error: File list not found'
 					]);
 				}
 			} else {
 				$this->setHttpCode(404);
 				echo json_encode([
 					'success'	=>	false,
-					'message'	=>	'List not found'
+					'message'	=>	'Error: List not found'
 				]);
 			}
 		} else {
@@ -283,6 +352,51 @@ class ListsRead extends Response {
 				'success'	=>	false,
 				'message'	=>	'Error: List not found'
 			]);
+		}
+	}
+
+	public function download(string|null $no_ignore) {
+		if (!in_array($this->username, ['', null, false])) {
+			$apiKey			=	$this->callback->getApiKey();
+			$query			=	$this->orm->select([
+				'slug'		=>	$this->listID,
+				'user_id'	=>	$this->username,
+			], [ 'list_file', 'user_id', 'title', 'privacy' ]);
+
+			if ($query != null) {
+				$listUserID	=	$query[0]['user_id'];
+				$path		=	$this->path . $query[0]['list_file'];
+
+				if (isset($apiKey)) {
+					$userID		=	$this->apiKey->getUserID($apiKey);
+				} else {
+					$userID		=	$this->login->getUserID();
+				}
+
+				if ($query[0]['privacy'] == "private") {
+					if ($listUserID == $userID) {
+						$this->setHttpCode(200);
+						header("Content-type: application/x-zip");
+						$this->runDownloadPdfFiles($path, $query[0]['title'], $no_ignore);
+					} else {
+						$this->setHttpCode(403);
+						echo json_encode([
+							'success'	=>	false,
+							'message'	=>	'Error: List is private'
+						]);
+					}
+				} else {
+					$this->setHttpCode(200);
+					header("Content-type: application/x-zip");
+					$this->runDownloadPdfFiles($path, $query[0]['title'], $no_ignore);
+				}
+			} else {
+				$this->setHttpCode(404);
+				echo json_encode([
+					'success'	=>	false,
+					'message'	=>	'Error: List not found'
+				]);
+			}
 		}
 	}
 

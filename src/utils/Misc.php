@@ -25,6 +25,10 @@ class Misc {
 		return $date->format($format);
 	}
 
+	public static function hasUrl(string $string): bool {
+		return preg_match('/\bhttps?:\/\/\S+\b/', $string);
+	}
+
 	public static function formatBytes(int $bytes, int $precision = 2): string {
 		$units	=	['B', 'KB', 'MB', 'GB', 'TB', 'EB'];
 		$bytes  = 	max($bytes, 0);

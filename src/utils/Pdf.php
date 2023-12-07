@@ -1,6 +1,7 @@
 <?php
 
 namespace Monlib\Utils;
+
 use Smalot\PdfParser\Parser;
 
 use Dotenv\Dotenv;
@@ -66,6 +67,10 @@ class Pdf extends Misc {
 	public static function thumbnail(string $url): string {
 		Dotenv::createImmutable('./')->load();
 		return $_ENV['URL_PDF_THUMB'] . $url;
+	}
+
+	public static function urlFileContent(string $url): string {
+		return file_get_contents($url);
 	}
 
 }
