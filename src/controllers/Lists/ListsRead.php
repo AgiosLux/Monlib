@@ -47,6 +47,10 @@ class ListsRead extends Response {
 		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/qrcode";
 	}
 
+	private function statsUrl(): string {
+		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/stats";
+	}
+
 	private function lineContainsIgnore(string $line): bool {
 		$position = strpos($line, '!ignore');
 		
@@ -116,7 +120,7 @@ class ListsRead extends Response {
 		$this->username	=	$this->user->getUserIdByUsername($username);
 
 		$this->fields	=	[
-			'slug', 'title', 'item_id', 'user_id', 'mode', 'privacy', 'added_in', 'updated_in', 'user_id', 'total_access', 'total_downloads'
+			'slug', 'title', 'item_id', 'user_id', 'mode', 'privacy', 'added_in', 'updated_in', 'user_id'
 		];
 	}
 
@@ -144,6 +148,7 @@ class ListsRead extends Response {
 				$data['url']		=	[
 					'raw'			=>	$this->rawUrl(),
 					'page'			=>	$this->pageUrl(),
+					'stats'			=>	$this->statsUrl(),
 					'qrcode'		=>	$this->qrCodeUrl(),
 					'inspect'		=>	$this->inspectUrl(),
 				];

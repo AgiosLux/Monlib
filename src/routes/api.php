@@ -98,7 +98,8 @@ $router->post('/api/lists/create', [
 
 $router->get('/api/lists/{username}/{listID}/{section}', [
 	function ($username, $listID, $section) {
-		$listsRead	=	new Monlib\Controllers\Lists\ListsRead($username, $listID);
+		$listsRead		=	new Monlib\Controllers\Lists\ListsRead($username, $listID);
+		$listsStats		=	new Monlib\Controllers\Lists\ListsStats($username, $listID);
 
 		switch (strtolower($section)) {
 			case 'raw':
@@ -112,6 +113,9 @@ $router->get('/api/lists/{username}/{listID}/{section}', [
 
 			case 'download':
 				return new Response(0, $listsRead->download($_GET['no-ignore']), 'application/json');
+
+			case 'stats':
+				return new Response(0, $listsStats->getStats($_GET['action']), 'application/json');
 
 			case 'qrcode':
 				return new Response(0, $listsRead->qrCode(), 'image/svg+xml');
