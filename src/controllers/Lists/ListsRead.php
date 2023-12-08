@@ -6,6 +6,7 @@ use Monlib\Models\ORM;
 use Monlib\Utils\{Pdf, File, Misc};
 use Monlib\Http\{Response, Callback};
 use Monlib\Controllers\Account\Login;
+use Monlib\Controllers\Lists\ListsStats;
 use Monlib\Controllers\User\{User, ApiKey};
 
 use chillerlan\QRCode\Common\EccLevel;
@@ -26,6 +27,7 @@ class ListsRead extends Response {
 	protected Dotenv $dotenv;
 	protected string $username;
 	protected Callback $callback;
+	protected ListsStats $listsStats;
 
 	private function rawUrl(): string {
 		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/raw";
@@ -39,16 +41,16 @@ class ListsRead extends Response {
 		return $_ENV['URL_ROOT'] . "/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID;
 	}
 
-	private function inspectUrl(): string {
-		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/inspect";
+	private function statsUrl(): string {
+		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/stats";
 	}
 
 	private function qrCodeUrl(): string {
 		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/qrcode";
 	}
 
-	private function statsUrl(): string {
-		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/stats";
+	private function inspectUrl(): string {
+		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/inspect";
 	}
 
 	private function lineContainsIgnore(string $line): bool {
@@ -106,20 +108,21 @@ class ListsRead extends Response {
 	}
 
 	public function __construct(string $username, string $listID, string $table = 'lists') {
-		$this->dotenv	=	Dotenv::createImmutable('./');
+		$this->dotenv		=	Dotenv::createImmutable('./');
 		$this->dotenv->load();
 
-		$this->user		=	new User;
-		$this->login	=	new Login;
-		$this->apiKey	=	new ApiKey;
-		$this->callback	=	new Callback;
-		$this->orm		=	new ORM($table);
-		$this->path		=	$_ENV['STORAGE_PATH'];
+		$this->user			=	new User;
+		$this->login		=	new Login;
+		$this->apiKey		=	new ApiKey;
+		$this->callback		=	new Callback;
+		$this->orm			=	new ORM($table);
+		$this->path			=	$_ENV['STORAGE_PATH'];
 
-		$this->listID	=	$listID;
-		$this->username	=	$this->user->getUserIdByUsername($username);
+		$this->listID		=	$listID;
+		$this->username		=	$this->user->getUserIdByUsername($username);
+		$this->listsStats	=	new ListsStats($this->username, $this->listID);
 
-		$this->fields	=	[
+		$this->fields		=	[
 			'slug', 'title', 'item_id', 'user_id', 'mode', 'privacy', 'added_in', 'updated_in', 'user_id'
 		];
 	}
@@ -198,7 +201,7 @@ class ListsRead extends Response {
 
 	public function raw() {
 		if (!in_array($this->username, ['', null, false])) {
-			$apiKey			=	$this->callback->getApiKey();
+			$apiKey			=	$this->callback->getApiKey() ? $this->callback->getApiKey() : null;
 			$query			=	$this->orm->select([
 				'slug'		=>	$this->listID,
 				'user_id'	=>	$this->username,
@@ -224,8 +227,15 @@ class ListsRead extends Response {
 							'message'	=>	'Error: List is private'
 						]);
 					}
-				} else if ($query[0]["privacy"] == "public") {
+				} else {
 					$this->setHttpCode(200);
+
+					if ($apiKey != null) {
+						if ($listUserID != $userID) {
+							$this->listsStats->addRawDownloadCount();
+						}
+					}
+
 					echo File::read($this->path . $query[0]['list_file']);
 				}
 			} else {

@@ -12,29 +12,30 @@ class ListsStats extends Response {
 	protected User $user;
 	protected int $username;
 	protected string $listID;
+	protected array $conditions;
 
 	public function __construct(string $username, string $listID, string $table = 'lists') {
-		$this->user		=	new User;
-		$this->orm		=	new ORM($table);
+		$this->user			=	new User;
+		$this->orm			=	new ORM($table);
 
-		$this->listID	=	$listID;
-		$this->username	=	$this->user->getUserIdByUsername($username);
+		$this->listID		=	$listID;
+		$this->username		=	$this->user->getUserIdByUsername($username);
+		
+		$this->conditions	=	[
+			'slug'			=>	$this->listID,
+			'user_id'		=>	$this->username,
+		];
 	}
 
 	public function addAccessCount(): bool {
-		$conditions		=	[
-			'slug'		=>	$this->listID,
-			'user_id'	=>	$this->username,
-		];
-
-		$query			=	$this->orm->select($conditions, [
+		$query			=	$this->orm->select($this->conditions, [
 			'total_access'
 		]);
 
 		if ($query != null) {
-			$editData				=	$this->orm->update([
+			$editData			=	$this->orm->update([
 				"total_access"	=>	$query[0]['total_access'] += 1
-			], $conditions);
+			], $this->conditions);
 
 			if ($editData != null) {
 				return true;
@@ -47,19 +48,34 @@ class ListsStats extends Response {
 	}
 
 	public function addDownloadCount(): bool {
-		$conditions		=	[
-			'slug'		=>	$this->listID,
-			'user_id'	=>	$this->username,
-		];
-
-		$query			=	$this->orm->select($conditions, [
+		$query			=	$this->orm->select($this->conditions, [
 			'total_downloads'
 		]);
 
 		if ($query != null) {
 			$editData				=	$this->orm->update([
 				"total_downloads"	=>	$query[0]['total_downloads'] += 1
-			], $conditions);
+			], $this->conditions);
+
+			if ($editData != null) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+
+	public function addRawDownloadCount(): bool {
+		$query			=	$this->orm->select($this->conditions, [
+			'total_downloads'
+		]);
+
+		if ($query != null) {
+			$editData				=	$this->orm->update([
+				"total_downloads"	=>	$query[0]['total_downloads'] += 1
+			], $this->conditions);
 
 			if ($editData != null) {
 				return true;
@@ -85,10 +101,7 @@ class ListsStats extends Response {
 				break;
 		}
 
-		$query			=	$this->orm->select([
-			'slug'		=>	$this->listID,
-			'user_id'	=>	$this->username,
-		], [
+		$query		=	$this->orm->select($this->conditions, [
 			'total_access', 'total_downloads'
 		]);
 
