@@ -1,15 +1,32 @@
 <?php
 
 namespace Monlib\Utils;
+
 use DateTime;
 
 class Misc {
+
+	public static function hasUrl(string $string): bool {
+		return preg_match(
+			'/\bhttps?:\/\/\S+\b/', $string
+		);
+	}
 
 	public static function getUrl(string $inputString): string {
 		preg_match_all('/(https?:\/\/[^\s]+)/', $inputString, $matches);
 
 		$links		=	$matches[0];
 		return $links[0];
+	}
+
+	public static function lineContainsIgnore(string $string): bool {
+		$position	=	strpos($string, '!ignore');
+		
+		if ($position !== false) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	public static function gravatar(string $email, int $size = 300): string {
@@ -23,10 +40,6 @@ class Misc {
 	public static function formatDate(string $date, string $format): string {
 		$date	=	new DateTime($date);
 		return $date->format($format);
-	}
-
-	public static function hasUrl(string $string): bool {
-		return preg_match('/\bhttps?:\/\/\S+\b/', $string);
 	}
 
 	public static function formatBytes(int $bytes, int $precision = 2): string {

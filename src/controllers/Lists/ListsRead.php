@@ -53,58 +53,12 @@ class ListsRead extends Response {
 		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/inspect";
 	}
 
-	private function lineContainsIgnore(string $line): bool {
-		$position = strpos($line, '!ignore');
-		
-		if ($position !== false) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
 	private function downloadUrl(bool $no_ignore = false): string {
 		if ($no_ignore) {
 			return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/download?no-ignore=true";
 		}
 
 		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/download";
-	}
-
-	private function runDownloadPdfFiles(string $path, string $title, string $no_ignore = null) {
-		if (file_exists($path)) {
-			$file	=	fopen($path, 'r');
-
-			$zip	=	new ZipStream(
-				sendHttpHeaders: true,
-				outputName: "$title.zip",
-			);
-
-			if ($file) {
-				while (($line = fgets($file)) !== false) {
-					if (Misc::hasUrl($line)) {
-						$pdfFile		=	Misc::getUrl($line);
-
-						if (!isset($no_ignore) || $no_ignore == null) {
-							if ($this->lineContainsIgnore($line)) {
-								$zip->addFile(
-									data: Pdf::urlFileContent($pdfFile),
-									fileName: Pdf::urlFileName($pdfFile),
-								);
-							}
-						} else if ($no_ignore == 'true') {
-							$zip->addFile(
-								data: Pdf::urlFileContent($pdfFile),
-								fileName: Pdf::urlFileName($pdfFile),
-							);
-						}
-					}
-				}
-			}
-
-			fclose($file);
-			$zip->finish();
-		}
 	}
 
 	public function __construct(string $username, string $listID, string $table = 'lists') {
@@ -295,7 +249,7 @@ class ListsRead extends Response {
 									'thumbnail'	=>	Pdf::thumbnail($pdfFile),
 									'name'		=> 	Pdf::urlFileName($pdfFile),
 									'size'		=>	Pdf::urlFileSize($pdfFile),
-									'ignore'	=>	$this->lineContainsIgnore($line) ? true : false,
+									'ignore'	=>	Misc::lineContainsIgnore($line) ? true : false,
 								];
 
 								$total++;
@@ -367,51 +321,6 @@ class ListsRead extends Response {
 				'success'	=>	false,
 				'message'	=>	'Error: List not found'
 			]);
-		}
-	}
-
-	public function download(string|null $no_ignore) {
-		if (!in_array($this->username, ['', null, false])) {
-			$apiKey			=	$this->callback->getApiKey();
-			$query			=	$this->orm->select([
-				'slug'		=>	$this->listID,
-				'user_id'	=>	$this->username,
-			], [ 'list_file', 'user_id', 'title', 'privacy' ]);
-
-			if ($query != null) {
-				$listUserID	=	$query[0]['user_id'];
-				$path		=	$this->path . $query[0]['list_file'];
-
-				if (isset($apiKey)) {
-					$userID		=	$this->apiKey->getUserID($apiKey);
-				} else {
-					$userID		=	$this->login->getUserID();
-				}
-
-				if ($query[0]['privacy'] == "private") {
-					if ($listUserID == $userID) {
-						$this->setHttpCode(200);
-						header("Content-type: application/x-zip");
-						$this->runDownloadPdfFiles($path, $query[0]['title'], $no_ignore);
-					} else {
-						$this->setHttpCode(403);
-						echo json_encode([
-							'success'	=>	false,
-							'message'	=>	'Error: List is private'
-						]);
-					}
-				} else {
-					$this->setHttpCode(200);
-					header("Content-type: application/x-zip");
-					$this->runDownloadPdfFiles($path, $query[0]['title'], $no_ignore);
-				}
-			} else {
-				$this->setHttpCode(404);
-				echo json_encode([
-					'success'	=>	false,
-					'message'	=>	'Error: List not found'
-				]);
-			}
 		}
 	}
 

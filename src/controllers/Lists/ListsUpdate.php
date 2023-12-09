@@ -8,10 +8,10 @@ use Dotenv\Dotenv;
 
 class ListUpdate {
 
+	protected ORM $orm;
 	protected string $path;
 	protected string $table;
 	protected Dotenv $dotenv;
-	protected ORM $orm;
 
 	public function __construct(string $table = 'lists') {
 		$this->dotenv	=	Dotenv::createImmutable('./');

@@ -6,12 +6,12 @@ class View {
 
 	private static array $vars;
 
-	public static function init(array $vars) { self::$vars = $vars; }
-
 	private static function getContentView(string $view) {
 		$file	=	"./resources/pages/$view.html";
 		return file_exists($file) ? file_get_contents($file) : $file;
 	}
+
+	public static function init(array $vars) { self::$vars = $vars; }
 
 	public static function render(string $view, array $vars = []) {
 		$content	=	self::getContentView($view);

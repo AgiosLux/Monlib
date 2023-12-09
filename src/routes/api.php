@@ -3,10 +3,8 @@
 require_once "vendor/autoload.php";
 // error_reporting(0);
 
-use Monlib\Http\Router;
-use Monlib\Http\Response;
-
 use Dotenv\Dotenv;
+use Monlib\Http\{Response, Router};
 
 Dotenv::createImmutable('./')->load();
 $router		=	new Router($_ENV['URL_ROOT']);
@@ -100,6 +98,7 @@ $router->get('/api/lists/{username}/{listID}/{section}', [
 	function ($username, $listID, $section) {
 		$listsRead		=	new Monlib\Controllers\Lists\ListsRead($username, $listID);
 		$listsStats		=	new Monlib\Controllers\Lists\ListsStats($username, $listID);
+		$listsDownload	=	new Monlib\Controllers\Lists\ListsDownload($username, $listID);
 
 		switch (strtolower($section)) {
 			case 'raw':
@@ -112,7 +111,7 @@ $router->get('/api/lists/{username}/{listID}/{section}', [
 				return new Response(0, $listsRead->get(), 'application/json');
 
 			case 'download':
-				return new Response(0, $listsRead->download($_GET['no-ignore']), 'application/json');
+				return new Response(0, $listsDownload->makeDownload($_GET['no-ignore']), 'application/json');
 
 			case 'stats':
 				return new Response(0, $listsStats->getStats($_GET['action']), 'application/json');
