@@ -4,10 +4,9 @@ namespace Monlib\Controllers\User;
 
 use Monlib\Models\ORM;
 use Monlib\Http\Response;
-use Monlib\Utils\Generate;
-use Monlib\Utils\Validate;
 use Monlib\Services\Crypto;
 use Monlib\Controllers\Account\Login;
+use Monlib\Utils\{Generate, Validate};
 
 class ApiKey extends Response {
     
@@ -58,7 +57,7 @@ class ApiKey extends Response {
 		$this->orm		=	new ORM($table);
 	}
 
-	public function isValid(string $key): bool {
+	public function isValid(string|null $key): bool {
 		if (Validate::apiKey($key)) {
 			$query			=	$this->orm->count([
 				'status'	=>	'actived',
@@ -75,7 +74,7 @@ class ApiKey extends Response {
 		}
 	}
 
-	public function getUserID(string $key): int|bool {
+	public function getUserID(string|null $key): int|bool {
 		if ($this->isValid($key)) {
 			$query			=	$this->orm->select([
 				'api_key'	=>	$this->crypto->encrypt($key),

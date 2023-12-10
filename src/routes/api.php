@@ -120,7 +120,18 @@ $router->get('/api/lists/{username}/{listID}/{section}', [
 				return new Response(0, $listsRead->qrCode(), 'image/svg+xml');
 
 			default:
-				return new Response(404, 'URL not found', 'application/json');
+				return new Response(404, json_encode('URL not found'), 'application/json');
+		}
+	}
+]);
+
+$router->get('/api/profile/{username}/{section}', [
+	function ($username, $section) {
+		$listsList	=	new Monlib\Controllers\Lists\ListsList($username);
+
+		switch (strtolower($section)) {
+			case 'lists':
+				return new Response(200, $listsList->listAllLists($_GET['privacy'], $_GET['offset'], $_GET['limit']), 'application/json');
 		}
 	}
 ]);

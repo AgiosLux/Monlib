@@ -18,7 +18,7 @@ class ORM {
         $this->pdo      =   $this->database->getPDO();
     }
     
-    public function select(array $conditions, string|array $fields = '*', int $limit = 50, int $offset = 0) {
+    public function select(array $conditions, string|array $fields = '*', int $offset = 0, int $limit = 50) {
         $query = "SELECT ";
     
         if (is_array($fields)) {

@@ -6,14 +6,13 @@ use Monlib\Models\ORM;
 use Monlib\Utils\{Pdf, File, Misc};
 use Monlib\Http\{Response, Callback};
 use Monlib\Controllers\Account\Login;
-use Monlib\Controllers\Lists\ListsStats;
 use Monlib\Controllers\User\{User, ApiKey};
+use Monlib\Controllers\Lists\{ListsStats, ListsMeta};
 
 use chillerlan\QRCode\Common\EccLevel;
 use chillerlan\QRCode\{QRCode, QROptions};
 
 use Dotenv\Dotenv;
-use ZipStream\ZipStream;
 
 class ListsRead extends Response {
 
@@ -24,46 +23,13 @@ class ListsRead extends Response {
 	protected array $fields;
 	protected string $listID;
 	protected ApiKey $apiKey;
-	protected Dotenv $dotenv;
 	protected string $username;
 	protected Callback $callback;
+	protected ListsMeta $listsMeta;
 	protected ListsStats $listsStats;
 
-	private function rawUrl(): string {
-		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/raw";
-	}
-
-	private function getCli(): string {
-		return "paimon -r @" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID;
-	}
-
-	private function pageUrl(): string {
-		return $_ENV['URL_ROOT'] . "/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID;
-	}
-
-	private function statsUrl(): string {
-		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/stats";
-	}
-
-	private function qrCodeUrl(): string {
-		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/qrcode";
-	}
-
-	private function inspectUrl(): string {
-		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/inspect";
-	}
-
-	private function downloadUrl(bool $no_ignore = false): string {
-		if ($no_ignore) {
-			return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/download?no-ignore=true";
-		}
-
-		return $_ENV['URL_ROOT'] . "/api/lists/" . $this->user->getUsernameByUserId($this->username) . "/" . $this->listID . "/download";
-	}
-
 	public function __construct(string $username, string $listID, string $table = 'lists') {
-		$this->dotenv		=	Dotenv::createImmutable('./');
-		$this->dotenv->load();
+		Dotenv::createImmutable('./')->load();
 
 		$this->user			=	new User;
 		$this->login		=	new Login;
@@ -74,6 +40,7 @@ class ListsRead extends Response {
 
 		$this->listID		=	$listID;
 		$this->username		=	$this->user->getUserIdByUsername($username);
+		$this->listsMeta	=	new ListsMeta($this->username, $this->listID);
 		$this->listsStats	=	new ListsStats($this->username, $this->listID);
 
 		$this->fields		=	[
@@ -103,17 +70,17 @@ class ListsRead extends Response {
 				unset($data['user_id']);
 
 				$data['url']		=	[
-					'raw'			=>	$this->rawUrl(),
-					'page'			=>	$this->pageUrl(),
-					'stats'			=>	$this->statsUrl(),
-					'qrcode'		=>	$this->qrCodeUrl(),
-					'inspect'		=>	$this->inspectUrl(),
+					'raw'			=>	$this->listsMeta->rawUrl(),
+					'page'			=>	$this->listsMeta->pageUrl(),
+					'stats'			=>	$this->listsMeta->statsUrl(),
+					'qrcode'		=>	$this->listsMeta->qrCodeUrl(),
+					'inspect'		=>	$this->listsMeta->inspectUrl(),
 				];
 
 				$data['download']	=	[
-					'cli'			=>	$this->getCli(),
-					'main'			=>	$this->downloadUrl(),
-					'no_ignore'		=>	$this->downloadUrl(true),
+					'cli'			=>	$this->listsMeta->getCli(),
+					'main'			=>	$this->listsMeta->downloadUrl(),
+					'no_ignore'		=>	$this->listsMeta->downloadUrl(true),
 				];
 	
 				if ($data["privacy"] == "private") {
@@ -219,7 +186,7 @@ class ListsRead extends Response {
 		
 		header("Content-Type: image/svg+xml");
 		echo (new QRCode($options))->render(
-			$this->pageUrl()
+			$this->listsMeta->pageUrl()
 		);
 	}
 
