@@ -3,7 +3,7 @@
 namespace Monlib\Controllers\Lists;
 
 use Monlib\Models\ORM;
-use Monlib\Utils\{Pdf, File, Misc};
+use Monlib\Utils\File;
 use Monlib\Http\{Response, Callback};
 use Monlib\Controllers\Account\Login;
 use Monlib\Controllers\User\{User, ApiKey};
@@ -188,107 +188,6 @@ class ListsRead extends Response {
 		echo (new QRCode($options))->render(
 			$this->listsMeta->pageUrl()
 		);
-	}
-
-	public function inspect() {
-		if (!in_array($this->username, ['', null, false])) {
-			$apiKey			=	$this->callback->getApiKey();
-			$query			=	$this->orm->select([
-				'slug'		=>	$this->listID,
-				'user_id'	=>	$this->username,
-			], [ 'list_file', 'user_id', 'title', 'privacy' ]);
-
-			if ($query != null) {
-				$file_path	=	$this->path . $query[0]['list_file'];
-
-				if (file_exists($file_path)) {
-					$total	=	0;
-					$file	=	fopen($file_path, 'r');
-
-					if ($file) {
-						while (($line = fgets($file)) !== false) {
-							if (Misc::hasUrl($line)) {
-								$pdfFile		=	Misc::getUrl($line);
-
-								$pdf_files[]	=	[
-									'url'		=>	$pdfFile,
-									'metadata'	=>	Pdf::details($pdfFile),
-									'thumbnail'	=>	Pdf::thumbnail($pdfFile),
-									'name'		=> 	Pdf::urlFileName($pdfFile),
-									'size'		=>	Pdf::urlFileSize($pdfFile),
-									'ignore'	=>	Misc::lineContainsIgnore($line) ? true : false,
-								];
-
-								$total++;
-							}
-						}
-
-						fclose($file);
-						$listUserID	=	$query[0]['user_id'];
-		
-						if (isset($apiKey)) {
-							$userID		=	$this->apiKey->getUserID($apiKey);
-						} else {
-							$userID		=	$this->login->getUserID();
-						}
-
-						if ($query[0]['privacy'] == "private") {
-							if ($listUserID == $userID) {
-								$this->setHttpCode(200);
-								echo json_encode([
-									'success'		=>	true,
-									'total_links'	=>	$total,
-									'pdf_files'		=>	$pdf_files,
-									'title'			=>	$query[0]['title'],
-									'dataset_size'	=>	Misc::formatBytes(File::size($file_path)),
-									'author'		=>	$this->user->getUsernameByUserId($query[0]['user_id']),
-								]);
-							} else {
-								$this->setHttpCode(403);
-								echo json_encode([
-									'success'	=>	false,
-									'message'	=>	'Error: List is private'
-								]);
-							}
-						} else {
-							$this->setHttpCode(200);
-							echo json_encode([
-								'success'		=>	true,
-								'total_links'	=>	$total,
-								'pdf_files'		=>	$pdf_files,
-								'title'			=>	$query[0]['title'],
-								'dataset_size'	=>	Misc::formatBytes(File::size($file_path)),
-								'author'		=>	$this->user->getUsernameByUserId($query[0]['user_id']),
-							]);
-						}
-					} else {
-						$this->setHttpCode(500);
-						echo json_encode([
-							'success'	=>	false,
-							'message'	=>	'Error: Could not open the file'
-						]);
-					}
-				} else {
-					$this->setHttpCode(404);
-					echo json_encode([
-						'success'	=>	false,
-						'message'	=>	'Error: File list not found'
-					]);
-				}
-			} else {
-				$this->setHttpCode(404);
-				echo json_encode([
-					'success'	=>	false,
-					'message'	=>	'Error: List not found'
-				]);
-			}
-		} else {
-			$this->setHttpCode(404);
-			echo json_encode([
-				'success'	=>	false,
-				'message'	=>	'Error: List not found'
-			]);
-		}
 	}
 
 }

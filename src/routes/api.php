@@ -98,6 +98,7 @@ $router->get('/api/lists/{username}/{listID}/{section}', [
 	function ($username, $listID, $section) {
 		$listsRead		=	new Monlib\Controllers\Lists\ListsRead($username, $listID);
 		$listsStats		=	new Monlib\Controllers\Lists\ListsStats($username, $listID);
+		$listsInspect	=	new Monlib\Controllers\Lists\ListsInspect($username, $listID);
 		$listsDownload	=	new Monlib\Controllers\Lists\ListsDownload($username, $listID);
 
 		switch (strtolower($section)) {
@@ -105,7 +106,7 @@ $router->get('/api/lists/{username}/{listID}/{section}', [
 				return new Response(0, $listsRead->raw(), 'application/json');
 
 			case 'inspect':
-				return new Response(0, $listsRead->inspect(), 'application/json');
+				return new Response(0, $listsInspect->inspect(), 'application/json');
 
 			case 'details':
 				return new Response(0, $listsRead->get(), 'application/json');
