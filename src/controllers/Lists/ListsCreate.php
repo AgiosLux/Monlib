@@ -3,13 +3,10 @@
 namespace Monlib\Controllers\Lists;
 
 use Monlib\Models\ORM;
-use Monlib\Utils\File;
-use Monlib\Http\Response;
-use Monlib\Http\Callback;
-use Monlib\Utils\Generate;
-use Monlib\Controllers\User\User;
-use Monlib\Controllers\User\ApiKey;
+use Monlib\Utils\{File, Generate};
 use Monlib\Controllers\Account\Login;
+use Monlib\Http\{Response, Callback};
+use Monlib\Controllers\User\{User, ApiKey};
 
 use Dotenv\Dotenv;
 

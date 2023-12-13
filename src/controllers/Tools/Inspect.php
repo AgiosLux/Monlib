@@ -4,9 +4,7 @@ namespace Monlib\Controllers\Tools;
 
 use Monlib\Http\Response;
 
-use Monlib\Utils\Pdf;
-use Monlib\Utils\Misc;
-use Monlib\Utils\Validate;
+use Monlib\Utils\{Pdf, Misc, Validate};
 
 class Inspect extends Response {
 

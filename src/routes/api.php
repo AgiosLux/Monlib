@@ -8,11 +8,10 @@ use Monlib\Http\{Response, Router};
 
 Dotenv::createImmutable('./')->load();
 $router		=	new Router($_ENV['URL_ROOT']);
-$xUrl		=	explode('/', $_GET['urlRooter']);
 
 $router->post('/api/account/login', [
 	function () {
-		$login	=	new Monlib\Controllers\Account\Login;
+		$login		=	new Monlib\Controllers\Account\Login;
 		return new Response(0, $login->loginAccount(), 'application/json');
 	}
 ]);
@@ -26,56 +25,56 @@ $router->post('/api/account/register', [
 
 $router->get('/api/account/check-logged', [
 	function () {
-		$login	=	new Monlib\Controllers\Account\Login;
+		$login		=	new Monlib\Controllers\Account\Login;
 		return new Response(0, $login->checkUserLogged(), 'application/json');
 	}
 ]);
 
 $router->get('/api/account/logoff', [
 	function () {
-		$login	=	new Monlib\Controllers\Account\Login;
+		$login		=	new Monlib\Controllers\Account\Login;
 		return new Response(0, $login->doLogoff(), 'application/json');
 	}
 ]);
 
 $router->post('/api/api-keys/create', [
 	function () {
-		$apiKey	=	new Monlib\Controllers\User\ApiKey;
+		$apiKey		=	new Monlib\Controllers\User\ApiKey;
 		return new Response(0, $apiKey->generateNewKey(), 'application/json');
 	}
 ]);
 
 $router->post('/api/api-keys/change-status/{key}', [
 	function ($key) {
-		$apiKey	=	new Monlib\Controllers\User\ApiKey;
+		$apiKey		=	new Monlib\Controllers\User\ApiKey;
 		return new Response(0, $apiKey->changeStatusKey($key), 'application/json');
 	}
 ]);
 
 $router->post('/api/api-keys/edit/{key}', [
 	function ($key) {
-		$apiKey	=	new Monlib\Controllers\User\ApiKey;
+		$apiKey		=	new Monlib\Controllers\User\ApiKey;
 		return new Response(0, $apiKey->editKey($key), 'application/json');
 	}
 ]);
 
 $router->delete('/api/api-keys/delete/{key}', [
 	function ($key) {
-		$apiKey	=	new Monlib\Controllers\User\ApiKey;
+		$apiKey		=	new Monlib\Controllers\User\ApiKey;
 		return new Response(0, $apiKey->deleteKey($key), 'application/json');
 	}
 ]);
 
 $router->get('/api/api-keys/list', [
-	function ($key) {
-		$apiKey	=	new Monlib\Controllers\User\ApiKey;
+	function () {
+		$apiKey		=	new Monlib\Controllers\User\ApiKey;
 		return new Response(0, $apiKey->listAllKeys(), 'application/json');
 	}
 ]);
 
 $router->get('/api/api-keys/get/{key}', [
 	function ($key) {
-		$apiKey	=	new Monlib\Controllers\User\ApiKey;
+		$apiKey		=	new Monlib\Controllers\User\ApiKey;
 		return new Response(0, $apiKey->getKey($key), 'application/json');
 	}
 ]);
@@ -126,13 +125,20 @@ $router->get('/api/lists/{username}/{listID}/{section}', [
 	}
 ]);
 
+$router->delete('/api/delete/list/{username}/{listID}', [
+	function ($username, $listID) {
+		$listsDelete	=	new Monlib\Controllers\Lists\ListsDelete($username, $listID);
+		return new Response(0, $listsDelete->delete(), 'application/json');
+	}
+]);
+
 $router->get('/api/profile/{username}/{section}', [
 	function ($username, $section) {
 		$listsList	=	new Monlib\Controllers\Lists\ListsList($username);
 
 		switch (strtolower($section)) {
 			case 'lists':
-				return new Response(200, $listsList->listAllLists($_GET['privacy'], $_GET['offset'], $_GET['limit']), 'application/json');
+				return new Response(0, $listsList->listAllLists($_GET['privacy'], $_GET['offset'], $_GET['limit']), 'application/json');
 		}
 	}
 ]);

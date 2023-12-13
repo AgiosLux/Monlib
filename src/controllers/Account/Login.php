@@ -4,10 +4,8 @@ namespace Monlib\Controllers\Account;
 
 use Monlib\Models\ORM;
 use Monlib\Http\Response;
-use Monlib\Utils\Cookies;
-use Monlib\Utils\Validate;
-use Monlib\Utils\Generate;
 use Monlib\Services\Crypto;
+use Monlib\Utils\{Cookies, Validate, Generate};
 
 class Login extends Response {
     
@@ -15,7 +13,7 @@ class Login extends Response {
     protected Crypto $crypto;
 	protected string $cookie;
 
-	private function generateCookieValue(int $userID): string {
+	public function generateCookieValue(int $userID): string {
 		return base64_encode(
 			Generate::generateRandomString(32) . ':' . $userID
 		);

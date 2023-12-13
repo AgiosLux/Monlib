@@ -8,6 +8,7 @@ use Monlib\Http\{Response, Callback};
 use Monlib\Controllers\Account\Login;
 use Monlib\Controllers\User\{User, ApiKey};
 
+use Dotenv\Dotenv;
 use ZipStream\ZipStream;
 
 class ListsDownload extends Response {
@@ -59,6 +60,8 @@ class ListsDownload extends Response {
 	}
 
 	public function __construct(string $username, string $listID, string $table = 'lists') {
+		Dotenv::createImmutable('./')->load();
+
 		$this->user			=	new User;
 		$this->login		=	new Login;
 		$this->apiKey		=	new ApiKey;
@@ -66,6 +69,7 @@ class ListsDownload extends Response {
 		$this->orm			=	new ORM($table);
 
 		$this->listID		=	$listID;
+		$this->path			=	$_ENV['STORAGE_PATH'];
 		$this->username		=	$this->user->getUserIdByUsername($username);
 	}
 
@@ -80,6 +84,7 @@ class ListsDownload extends Response {
 			if ($query != null) {
 				$listUserID	=	$query[0]['user_id'];
 				$path		=	$this->path . $query[0]['list_file'];
+
 
 				if (isset($apiKey)) {
 					$userID		=	$this->apiKey->getUserID($apiKey);

@@ -10,22 +10,34 @@ use ReflectionFunction;
 
 class Router {
 
-	private string $url;
-	private array $routes;
-	private string $prefix;
-	private Dotenv $dotenv;
-	private Request $request;
-	private Response $response;
+	protected string $url;
+	protected array $routes;
+	protected string $prefix;
+	protected Dotenv $dotenv;
+	protected Request $request;
+	protected Response $response;
 
-	public function __construct(string $url) {
-		$this->dotenv       =   Dotenv::createImmutable('./');
-		$this->dotenv->load();
+	private function getRoute() {
+		$uri = $this->getUri();
+		$httpMethod = $this->request->getHttpMethod();
 
-		$this->url          =   $url;
-		$this->request      =   new Request;
-		$this->response     =   new Response(200, '');
+		foreach ($this->routes as $patternRoute => $methods) {
+			if (preg_match($patternRoute, $uri, $matches)) {
+				if ($methods[$httpMethod]) {
+					unset($matches[0]);
 
-		$this->setPrefix();
+					$keys                                           =   $methods[$httpMethod]['variables'];
+					$methods[$httpMethod]['variables']              =   array_combine($keys, $matches);
+					$methods[$httpMethod]['variables']['request']   =   $this->request;
+
+					return $methods[$httpMethod];
+				}
+
+				throw new Exception("Method not allowed", 405);
+			}
+		}
+
+		throw new Exception("URL not found", 404);
 	}
 
 	private function setPrefix() {
@@ -61,27 +73,15 @@ class Router {
 		return end($xUri);
 	}
 
-	private function getRoute() {
-		$uri = $this->getUri();
-		$httpMethod = $this->request->getHttpMethod();
+	public function __construct(string $url) {
+		$this->dotenv       =   Dotenv::createImmutable('./');
+		$this->dotenv->load();
 
-		foreach ($this->routes as $patternRoute => $methods) {
-			if (preg_match($patternRoute, $uri, $matches)) {
-				if ($methods[$httpMethod]) {
-					unset($matches[0]);
+		$this->url          =   $url;
+		$this->request      =   new Request;
+		$this->response     =   new Response(200, '');
 
-					$keys                                           =   $methods[$httpMethod]['variables'];
-					$methods[$httpMethod]['variables']              =   array_combine($keys, $matches);
-					$methods[$httpMethod]['variables']['request']   =   $this->request;
-
-					return $methods[$httpMethod];
-				}
-
-				throw new Exception("Method not allowed", 405);
-			}
-		}
-
-		throw new Exception("URL not found", 404);
+		$this->setPrefix();
 	}
 
 	public function get(string $route, $params = []) { $this->addRoute('GET', $route, $params); }
@@ -96,9 +96,7 @@ class Router {
 		try {
 			$route				=	$this->getRoute();
 
-			if (!isset($route['controller'])) {
-				throw new Exception('A URL could not be processed.', 500);
-			}
+			if (!isset($route['controller'])) { throw new Exception('A URL could not be processed.', 500); }
 
 			$args               =   [];
 			$reflection         =   new ReflectionFunction($route['controller']);

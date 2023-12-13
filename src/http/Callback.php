@@ -22,7 +22,7 @@ class Callback extends Request {
 		if ($header) {
 			return $headers[$header];
 		} else {
-			$apiKey		=	$headers['Authorization'] ? $headers['Authorization'] : $headers['authorization'];
+			$apiKey		=	$headers['Authorization'] ?? $headers['authorization'];
 			preg_match('/^Bearer\s+(.*?)$/', $apiKey, $matches);
 			return $matches[1];
 		}
