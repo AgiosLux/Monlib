@@ -52,7 +52,7 @@ class ListsCreate extends Response {
 		$this->orm		=	new ORM($table);
 
 		$this->url 		=	$_ENV['URL_ROOT'];
-		$this->path		=	$_ENV['STORAGE_PATH'];
+		$this->path		=	$_ENV['STORAGE_LISTS_PATH'];
 	}
 
 	public function uploadAndCreate() {

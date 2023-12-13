@@ -36,7 +36,7 @@ class ListsRead extends Response {
 		$this->apiKey		=	new ApiKey;
 		$this->callback		=	new Callback;
 		$this->orm			=	new ORM($table);
-		$this->path			=	$_ENV['STORAGE_PATH'];
+		$this->path			=	$_ENV['STORAGE_LISTS_PATH'];
 
 		$this->listID		=	$listID;
 		$this->username		=	$this->user->getUserIdByUsername($username);

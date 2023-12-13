@@ -69,7 +69,7 @@ class ListsDownload extends Response {
 		$this->orm			=	new ORM($table);
 
 		$this->listID		=	$listID;
-		$this->path			=	$_ENV['STORAGE_PATH'];
+		$this->path			=	$_ENV['STORAGE_LISTS_PATH'];
 		$this->username		=	$this->user->getUserIdByUsername($username);
 	}
 
@@ -84,7 +84,6 @@ class ListsDownload extends Response {
 			if ($query != null) {
 				$listUserID	=	$query[0]['user_id'];
 				$path		=	$this->path . $query[0]['list_file'];
-
 
 				if (isset($apiKey)) {
 					$userID		=	$this->apiKey->getUserID($apiKey);

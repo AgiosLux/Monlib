@@ -13,7 +13,7 @@ class Login extends Response {
     protected Crypto $crypto;
 	protected string $cookie;
 
-	public function generateCookieValue(int $userID): string {
+	private function generateCookieValue(int $userID): string {
 		return base64_encode(
 			Generate::generateRandomString(32) . ':' . $userID
 		);

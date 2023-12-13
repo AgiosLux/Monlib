@@ -32,7 +32,7 @@ class ListsDelete extends Response {
 		$this->orm		=	new ORM($table);
 
 		$this->listID	=	$listID;
-		$this->path		=	$_ENV['STORAGE_PATH'];
+		$this->path		=	$_ENV['STORAGE_LISTS_PATH'];
 		$this->username	=	$this->user->getUserIdByUsername($username);
 
 		$this->query	=	$this->orm->select([
